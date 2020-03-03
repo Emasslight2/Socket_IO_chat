@@ -1,0 +1,62 @@
+<title>{{title}}</title>
+<style>
+    #message-container {
+        width: 80%;
+        max-width: 1200px;
+        min-height: 500px;
+    }
+
+    #message-container div {
+        background-color: #CCC;
+        padding 5px;
+    }
+
+    #message-container div:nth-child(2n) {
+        background-color: #FFF;
+    }
+</style>
+<script src="http://localhost:5000/socket.io/socket.io.js"></script>
+
+<div class="container">
+    <h4>{{username}}</h4>
+    <form method="POST" action="/logout" class="mb-4">
+        <input type="submit" value="Logout" class="btn btn-primary">
+    </form>
+
+    <div id="message-container"></div>
+    <form id="send-container">
+        <input type="text" id="message-input">
+        <button type="submit" id="send-button">Send</button>
+    </form>
+</div>
+
+<script defer>
+    const socket = io('http://localhost:5000');
+    const messageForm = document.getElementById('send-container');
+    const messageContainer = document.getElementById('message-container');
+    const messageInput = document.getElementById('message-input');
+    const username = `{{username}}`;
+    appendMessage('You joined');
+    socket.emit('new-user', username);
+    socket.on('chat-message', data => {
+        appendMessage(`${data.username}: ${data.message}`);
+    });
+    socket.on('user-connected', username => {
+        appendMessage(`${ username } connected`);
+    });
+    socket.on('user-disconnected', username => {
+        appendMessage(`${ username } disconnected`);
+    });
+    messageForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const message = messageInput.value;
+         appendMessage(`${username}: ${message}`);
+        socket.emit('send-chat-message', message);
+        messageInput.value = '';
+    });
+    function appendMessage(message) {
+        const messageElement = document.createElement('div');
+        messageElement.innerText = message;
+        messageContainer.append(messageElement);
+    }
+</script>
